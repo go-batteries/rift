@@ -1,33 +1,80 @@
-## Requirements:
-- golang
+# rift
 
+A CLI for tailing and filtering AWS CloudWatch and SQS logs, without
+squinting at raw JSON blobs in the AWS console. Point it at a log group
+or queue, optionally live-tail it, and grep with a pattern flag instead
+of piping through `grep` yourself and losing structure.
+
+## Requirements
+
+- Go 1.18+
+- AWS credentials configured (uses your `~/.aws` profile)
+
+## Build
+
+No published releases yet, build from source:
+
+```sh
+git clone https://github.com/go-batteries/rift.git
+cd rift
+go build -o rift .
+```
+
+`release.sh` cross-compiles for darwin/amd64, darwin/arm64, and
+linux/amd64 into `bin/` if you need binaries for other machines.
 
 ## Usage
 
-This cli tool expects you to pass a proto file to parse log messages. Each log backend can have its own proto to be parsed.
+### CloudWatch
 
-#### Cloudwatch
-A sample proto for a sample cloudwatch log stream has been provided in `proto/cloudwatch/log.proto`.
+```sh
+rift cloudwatch \
+  -region us-west-2 \
+  -profile default \
+  -group /my/log-group \
+  -stream my-log-stream \
+  -proto proto/cloudwatch/log.proto \
+  -live \
+  -grep "ERROR" -only
+```
 
-There are few fields that are required for a cloudwatch log.
-- time         : timestamp of the request
-- request_id   : a trace id for each request
-- msg          : the actual message
-- level        : log level of the message
+CloudWatch log parsing expects a proto definition for the log body. A
+sample is at `proto/cloudwatch/log.proto`, covering the fields rift
+looks for:
 
+- `time`: request timestamp
+- `request_id`: a trace ID per request
+- `msg`: the actual log message
+- `level`: log level
 
-#### SQS
+### SQS
 
-Presently it displays in whatever is there in request body
+```sh
+rift sqs \
+  -region us-west-2 \
+  -profile default \
+  -queue my-queue-name \
+  -live \
+  -grep "checkout" -only
+```
 
-### Usage
+SQS messages are currently displayed as-is from the message body; proto
+parsing for SQS is on the TODO list below.
 
-- Download the executable specific to your OS.
-- Build the project run `./release.sh`. And use the executable for your OS
+### Flags (both subcommands)
 
+| flag | meaning |
+|---|---|
+| `-region` | AWS region (default `us-west-2`) |
+| `-profile` | AWS profile (default `default`) |
+| `-proto` | proto file to parse the log/message body |
+| `-json` | print output as JSON |
+| `-live` | live-tail instead of a one-shot fetch |
+| `-grep` | filter by pattern |
+| `-only` | with `-grep`, show only matching lines |
 
-### TODO:
-- [ ] Check possibility of using proto. And how to parse non-JSON body
-- [ ] Improve code
-- [ ] Support more backends
-- [ ] Suppor only matching flag
+## TODO
+
+- [ ] proto parsing for SQS message bodies (currently CloudWatch only)
+- [ ] support more backends beyond CloudWatch and SQS
+- [ ] published releases / binary downloads
