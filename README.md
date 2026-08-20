@@ -35,7 +35,7 @@ rift cloudwatch \
   -stream my-log-stream \
   -proto proto/cloudwatch/log.proto \
   -live \
-  -grep "ERROR" -only
+  -grep "ERROR"
 ```
 
 CloudWatch log parsing expects a proto definition for the log body. A
@@ -55,7 +55,7 @@ rift sqs \
   -profile default \
   -queue my-queue-name \
   -live \
-  -grep "checkout" -only
+  -grep "checkout"
 ```
 
 SQS messages are currently displayed as-is from the message body; proto
@@ -71,10 +71,23 @@ parsing for SQS is on the TODO list below.
 | `-json` | print output as JSON |
 | `-live` | live-tail instead of a one-shot fetch |
 | `-grep` | filter by pattern |
-| `-only` | with `-grep`, show only matching lines |
+
+## Completeness
+
+CloudWatch and SQS streaming, formatting, and `-grep` filtering are
+real and wired end to end, not stubs. What's genuinely incomplete
+(verified by reading the source, not guessing):
+
+- `-only` is defined as a flag on both subcommands but never read
+  anywhere past the flag parser. It's currently a silent no-op, left
+  out of the usage examples above until it's implemented.
+- SQS message bodies are displayed as-is; proto-based structured
+  parsing (like CloudWatch already has) doesn't exist for SQS yet.
+- No published releases, build from source (see above).
 
 ## TODO
 
-- [ ] proto parsing for SQS message bodies (currently CloudWatch only)
+- [ ] implement `-only` or remove it
+- [ ] proto parsing for SQS message bodies
 - [ ] support more backends beyond CloudWatch and SQS
 - [ ] published releases / binary downloads
